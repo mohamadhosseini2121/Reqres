@@ -3,7 +3,7 @@ import React, {FC, useEffect, useState} from 'react';
 import Image from 'next/image';
 import {user_model} from '@/models';
 import {toast} from 'react-toastify';
-import {userApi} from '@/services/allServices';
+import {userApi} from '@/services/userApiService';
 import Spinner from 'react-bootstrap/Spinner';
 import Link from 'next/link';
 import {Button, Col, Container, Form, Row} from 'react-bootstrap';
@@ -75,7 +75,7 @@ const UserSinglePage: FC<props> = (props) => {
   }
 
   return (
-    <div className='p-5'>
+    <div className='p-sm-5 p-3'>
       <div className='text-center shadow p-3 rounded'>
         {fetchLoading || !user ? (
           <>

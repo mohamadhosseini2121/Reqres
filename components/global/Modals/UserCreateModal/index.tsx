@@ -1,5 +1,5 @@
 import {user_model} from '@/models';
-import {userApi} from '@/services/allServices';
+import {userApi} from '@/services/userApiService';
 import React, {FC, useEffect, useState} from 'react';
 import {Form} from 'react-bootstrap';
 import Button from 'react-bootstrap/Button';

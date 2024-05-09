@@ -1,3 +1,24 @@
+/**
+ * serviceGenerator gets api endpoint with needed types
+ * and will create an object with CRUD functions. if you
+ * don't need all functions just don't enter the type
+ * needed for that function.
+ *
+ *
+ * types:
+ * GetByIdOutputType: type of returned object from get by id request
+ * GetListOutputType: type of returned object from get list request
+ * GetListFilterType: all query params available for get list request as object
+ *          (object will be converted to query string and will be added to get list request)
+ * SaveInputType: type of object needed for a save (post or patch) request
+ * SaveOutputType: type of returned object from save (post or patch) request
+ * RemoveOutputType: type of returned object from delete request
+ *
+ * params:
+ * endpoint: your api endpoint
+ * authToken: Authorization token which will be set in header
+ */
+
 import {objectToQueryParams} from '@/helper';
 
 type IsNeverOrUndefined<T> = T extends never | undefined ? true : false;
@@ -65,11 +86,11 @@ const createApiService = <
   RemoveOutputType = never
 >(
   endpoint: string,
-  getToken?: string | null
+  authToken?: string | null
 ) => {
   const headers = {
     'Content-Type': 'application/json',
-    Authorization: getToken || '',
+    Authorization: authToken || '',
   };
 
   const fetchRequest = async (url: string, method: string, body?: string) => {

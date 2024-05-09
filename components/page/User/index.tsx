@@ -1,20 +1,24 @@
 'use client';
 import {user_filter_model, user_model} from '@/models';
-import {userApi} from '@/services/allServices';
+import {userApi} from '@/services/userApiService';
 import React, {FC, useEffect, useState} from 'react';
 import {Button, Container, Pagination, Spinner} from 'react-bootstrap';
 import UsersList from './components/UsersList';
 import {toast} from 'react-toastify';
 import UserCreateModal from '@/components/global/Modals/UserCreateModal';
+import {useAppDispatch, useAppSelector} from '@/lib/hooks';
+import {getUsersList, updateUsersList} from '@/lib/features/users/UserSlice';
 
 type props = {};
 const UserPage: FC<props> = (props) => {
+  const storeUsersList = useAppSelector(getUsersList);
+  const dispatch = useAppDispatch();
+
   const DEFAULT_USER_LIST_FILTERS = {
     page: 1,
     per_page: 6,
   };
   const [loading, setLoading] = useState<boolean>(false);
-  const [usersList, setUsersList] = useState<user_model[]>([]);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [userFetchFilters, setUserFetchFilters] =
     useState<Partial<user_filter_model>>(DEFAULT_USER_LIST_FILTERS);
@@ -31,7 +35,7 @@ const UserPage: FC<props> = (props) => {
     setLoading(true);
     try {
       const response = await userApi().getList(userFetchFilters);
-      setUsersList(response.data);
+      dispatch(updateUsersList(response.data));
       setTotalPages(response.total_pages);
     } catch (e) {
       toast(`There is a problem with getting data`, {
@@ -77,7 +81,7 @@ const UserPage: FC<props> = (props) => {
             <p className='mt-3'>Please wait...</p>
           </div>
         ) : (
-          <UsersList users_list={usersList} />
+          <UsersList users_list={storeUsersList} />
         )}
 
         <div className='d-flex justify-content-center mt-5'>

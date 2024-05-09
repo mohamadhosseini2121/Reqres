@@ -1,6 +1,6 @@
 import React, {FC} from 'react';
 import Image from 'next/image';
-import {userApi} from '@/services/allServices';
+import {userApi} from '@/services/userApiService';
 import UserSinglePage from '@/components/page/UserSingle';
 type props = {
   params: {id: string; slug: string};
