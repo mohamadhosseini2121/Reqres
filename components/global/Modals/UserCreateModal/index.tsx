@@ -1,3 +1,5 @@
+import {updateUsersList} from '@/lib/features/users/UserSlice';
+import {useAppDispatch} from '@/lib/hooks';
 import {user_model} from '@/models';
 import {userApi} from '@/services/userApiService';
 import React, {FC, useEffect, useState} from 'react';
@@ -10,6 +12,7 @@ type props = {
   children: React.ReactNode;
 };
 const UserCreateModal: FC<props> = ({children}: props) => {
+  const dispatch = useAppDispatch();
   const [tempUser, setTempUser] = useState<Partial<user_model>>({});
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -34,7 +37,9 @@ const UserCreateModal: FC<props> = ({children}: props) => {
       if (!user.first_name?.trim() && !user.last_name?.trim() && !user.email?.trim())
         throw new Error('all fields are empty. at lease enter one of them');
 
-      const response = await userApi().save(user);
+      await userApi().save(user);
+      const response = await userApi().getList({page: 1, per_page: 6});
+      dispatch(updateUsersList(response.data));
       toast(`user "${user.first_name || ''} ${user.last_name || ''}" created`, {
         autoClose: 2500,
         type: 'success',

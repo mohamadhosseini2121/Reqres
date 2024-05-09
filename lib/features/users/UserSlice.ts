@@ -16,14 +16,13 @@ export const UsersSlice = createSlice({
   reducers: {
     updateUsersList: (state, action: PayloadAction<user_model[]>) => {
       state.user_list = action.payload
-    }
+    },
+    
   }
 })
 
 export const { updateUsersList } = UsersSlice.actions
 
-// Other code such as selectors can use the imported `RootState` type
-// export const selectCount = (state: RootState) => state.counter.value
 export const getUsersList = (state: RootState) => state.users.user_list;
 
 export default UsersSlice.reducer

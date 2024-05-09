@@ -8,11 +8,14 @@ import Spinner from 'react-bootstrap/Spinner';
 import Link from 'next/link';
 import {Button, Col, Container, Form, Row} from 'react-bootstrap';
 import {useRouter} from 'next/navigation';
+import {useAppDispatch} from '@/lib/hooks';
+import {updateUsersList} from '@/lib/features/users/UserSlice';
 
 type props = {
   id: number;
 };
 const UserSinglePage: FC<props> = (props) => {
+  const dispatch = useAppDispatch();
   const [user, setUser] = useState<user_model | null>(null);
   const [fetchLoading, setFetchLoading] = useState<boolean>(false);
   const [dataChangeLoading, setDataChangeLoading] = useState<boolean>(false);
@@ -41,7 +44,9 @@ const UserSinglePage: FC<props> = (props) => {
   async function saveUserHandler(user: user_model) {
     setDataChangeLoading(true);
     try {
-      const response = await userApi().save(user);
+      await userApi().save(user);
+      const response = await userApi().getList({page: 1, per_page: 6});
+      dispatch(updateUsersList(response.data));
       toast(`user "${user.first_name || ''} ${user.last_name || ''}" data saved`, {
         autoClose: 2500,
         type: 'success',
@@ -59,6 +64,8 @@ const UserSinglePage: FC<props> = (props) => {
     setDataChangeLoading(true);
     try {
       await userApi().remove(user.id);
+      const response = await userApi().getList({page: 1, per_page: 6});
+      dispatch(updateUsersList(response.data));
       toast(`user ${user.first_name || ''} ${user.last_name || ''} deleted`, {
         autoClose: 2500,
         type: 'success',
