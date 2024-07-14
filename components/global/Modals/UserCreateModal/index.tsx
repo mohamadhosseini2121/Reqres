@@ -1,8 +1,7 @@
-import {updateUsersList} from '@/lib/features/users/UserSlice';
-import {useAppDispatch} from '@/lib/hooks';
+import {createUser, getUsersFromServer, getUsersState} from '@/lib/features/users/UserSlice';
+import {useAppDispatch, useAppSelector} from '@/lib/hooks';
 import {user_model} from '@/models';
-import {userApi} from '@/services/userApiService';
-import React, {FC, useEffect, useState} from 'react';
+import React, {FC, useState} from 'react';
 import {Form} from 'react-bootstrap';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
@@ -13,9 +12,10 @@ type props = {
 };
 const UserCreateModal: FC<props> = ({children}: props) => {
   const dispatch = useAppDispatch();
+  const {error, isLoading} = useAppSelector(getUsersState);
+
   const [tempUser, setTempUser] = useState<Partial<user_model>>({});
   const [show, setShow] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const handleClose = () => {
     setShow(false);
@@ -23,36 +23,18 @@ const UserCreateModal: FC<props> = ({children}: props) => {
   };
 
   const handelSubmit = async () => {
-    setLoading(true);
-    createUserHandler(tempUser);
-    setLoading(false);
-  };
-
-  const handleShow = () => setShow(true);
-
-  async function createUserHandler(user: Partial<user_model>) {
-    setLoading(true);
-    try {
-      // do validation
-      if (!user.first_name?.trim() && !user.last_name?.trim() && !user.email?.trim())
-        throw new Error('all fields are empty. at lease enter one of them');
-
-      await userApi().save(user);
-      const response = await userApi().getList({page: 1, per_page: 6});
-      dispatch(updateUsersList(response.data));
-      toast(`user "${user.first_name || ''} ${user.last_name || ''}" created`, {
+    await dispatch(createUser(tempUser));
+    await dispatch(getUsersFromServer({per_page: 6, page: 1}));
+    if (!error) {
+      toast(`user "${tempUser.first_name || ''} ${tempUser.last_name || ''}" created`, {
         autoClose: 2500,
         type: 'success',
       });
       handleClose();
-    } catch (e: any) {
-      toast(e.message || `There is a problem with saving user data`, {
-        autoClose: 2500,
-        type: 'error',
-      });
     }
-    setLoading(false);
-  }
+  };
+
+  const handleShow = () => setShow(true);
 
   return (
     <>
@@ -62,6 +44,7 @@ const UserCreateModal: FC<props> = ({children}: props) => {
           <Modal.Title>Add new user</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          {error.length > 0 && <p className='py-4 text-center text-danger'>{error}</p>}
           <Form.Group className='mb-3'>
             <Form.Label htmlFor='FirstNameInput'>First Name: </Form.Label>
             <Form.Control
@@ -94,8 +77,8 @@ const UserCreateModal: FC<props> = ({children}: props) => {
           <Button variant='secondary' onClick={handleClose}>
             Close
           </Button>
-          <Button variant='primary' onClick={handelSubmit} disabled={loading}>
-            {loading ? <>Please Wait...</> : <>Create</>}
+          <Button variant='primary' onClick={handelSubmit} disabled={isLoading}>
+            {isLoading ? <>Please Wait...</> : <>Create</>}
           </Button>
         </Modal.Footer>
       </Modal>

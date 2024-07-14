@@ -8,90 +8,74 @@ import Spinner from 'react-bootstrap/Spinner';
 import Link from 'next/link';
 import {Button, Col, Container, Form, Row} from 'react-bootstrap';
 import {useRouter} from 'next/navigation';
-import {useAppDispatch} from '@/lib/hooks';
-import {updateUsersList} from '@/lib/features/users/UserSlice';
+import {useAppDispatch, useAppSelector} from '@/lib/hooks';
+import {
+  createUser,
+  deleteUser,
+  getUserFromServer,
+  getUsersFromServer,
+  getUsersState,
+} from '@/lib/features/users/UserSlice';
 
 type props = {
   id: number;
 };
 const UserSinglePage: FC<props> = (props) => {
   const dispatch = useAppDispatch();
+  const {error, isLoading, userList} = useAppSelector(getUsersState);
   const [user, setUser] = useState<user_model | null>(null);
-  const [fetchLoading, setFetchLoading] = useState<boolean>(false);
-  const [dataChangeLoading, setDataChangeLoading] = useState<boolean>(false);
-  const router = useRouter();
 
   useEffect(() => {
     fetchData();
   }, []);
 
   async function fetchData() {
-    setFetchLoading(true);
-    try {
-      const userResponse = await userApi().getById(props.id);
-      if (userResponse.data) {
-        setUser(userResponse.data);
+    const user = userList.find((item) => item.id === props.id);
+    if (user) {
+      setUser(user);
+    } else {
+      const response = await dispatch(getUserFromServer(props.id));
+      if (error.length === 0 && response) {
+        setUser(response);
       }
-    } catch (e) {
-      toast(`There is a problem with getting data, Are sure this user exist?`, {
-        autoClose: 2500,
-        type: 'error',
-      });
     }
-    setFetchLoading(false);
   }
 
   async function saveUserHandler(user: user_model) {
-    setDataChangeLoading(true);
-    try {
-      await userApi().save(user);
-      const response = await userApi().getList({page: 1, per_page: 6});
-      dispatch(updateUsersList(response.data));
-      toast(`user "${user.first_name || ''} ${user.last_name || ''}" data saved`, {
+    await dispatch(createUser(user));
+    await dispatch(getUsersFromServer({per_page: 6, page: 1}));
+    if (!error) {
+      toast(`user "${user.first_name || ''} ${user.last_name || ''}" data changed`, {
         autoClose: 2500,
         type: 'success',
       });
-    } catch (e) {
-      toast(`There is a problem with saving user data`, {
-        autoClose: 2500,
-        type: 'error',
-      });
     }
-    setDataChangeLoading(false);
   }
 
   async function deleteUserHandler(user: user_model) {
-    setDataChangeLoading(true);
-    try {
-      await userApi().remove(user.id);
-      const response = await userApi().getList({page: 1, per_page: 6});
-      dispatch(updateUsersList(response.data));
-      toast(`user ${user.first_name || ''} ${user.last_name || ''} deleted`, {
+    await dispatch(deleteUser(user.id));
+    await dispatch(getUsersFromServer({per_page: 6, page: 1}));
+    if (!error) {
+      toast(`user "${user.first_name || ''} ${user.last_name || ''}" deleted`, {
         autoClose: 2500,
         type: 'success',
       });
-      router.replace('/');
-    } catch (e) {
-      console.log('error: ', e);
-      toast(`There is a problem with deleting user`, {
-        autoClose: 2500,
-        type: 'error',
-      });
     }
-    setDataChangeLoading(false);
   }
 
   return (
     <div className='p-sm-5 p-3'>
       <div className='text-center shadow p-3 rounded'>
-        {fetchLoading || !user ? (
+        {isLoading && (
           <>
             <Spinner animation='border' role='status'>
               <span className='visually-hidden'>Loading...</span>
             </Spinner>
             <p>please wait...</p>
           </>
-        ) : (
+        )}
+        {!isLoading && error.length > 0 && <p className='py-3 text-center text-danger'>{error}</p>}
+        {!isLoading && error.length === 0 && user && (
           <Container>
             <Row className='justify-content-center'>
               <Col md={3} sm={12}>
@@ -140,16 +124,16 @@ const UserSinglePage: FC<props> = (props) => {
                   className='me-3'
                   variant='primary'
                   onClick={() => saveUserHandler(user)}
-                  disabled={dataChangeLoading}
+                  disabled={isLoading}
                 >
-                  {dataChangeLoading ? <>Please wait...</> : <>Save changes</>}
+                  {isLoading ? <>Please wait...</> : <>Save changes</>}
                 </Button>
                 <Button
                   variant='danger'
                   onClick={() => deleteUserHandler(user)}
-                  disabled={dataChangeLoading}
+                  disabled={isLoading}
                 >
-                  {dataChangeLoading ? <>Please wait...</> : <>Delete user</>}
+                  {isLoading ? <>Please wait...</> : <>Delete user</>}
                 </Button>
               </Col>
             </Row>
